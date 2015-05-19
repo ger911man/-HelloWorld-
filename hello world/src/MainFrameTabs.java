@@ -11,7 +11,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.JTabbedPane;
 import javax.swing.JScrollPane;
 
-public class MainFrame {
+public class MainFrameTabs {
 
  private JFrame frame;
  private JScrollPane scrollPane;
@@ -24,7 +24,7 @@ public class MainFrame {
   EventQueue.invokeLater(new Runnable() {
    public void run() {
     try {
-     MainFrame window = new MainFrame();
+     MainFrameTabs window = new MainFrameTabs();
      window.frame.setVisible(true);
     } catch (Exception e) {
      e.printStackTrace();
@@ -36,7 +36,7 @@ public class MainFrame {
  /**
   * Create the application.
   */
- public MainFrame() {
+ public MainFrameTabs() {
   initialize();
  }
 
