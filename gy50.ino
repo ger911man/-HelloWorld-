@@ -1,7 +1,15 @@
-#include <Arduino.h>
+#include "Arduino.h"
 #include <Wire.h>
 //This code is to use with L3G4200 triple axis gyro
 //Modified by SurtrTech
+
+//Pinouts
+//arduino     GY-50
+//3.3v        SDO + VCC
+//A4          SDA
+//A5          SCL
+//GND         GND
+
 
 
 #define CTRL_REG1 0x20
@@ -15,31 +23,35 @@ int L3G4200D_Address = 105; //I2C address of the L3G4200D
 int x;
 int y;
 int z;
+int prevx = x;
+int prevy = y;
+int prevz = z;
+int deltax;
+int deltay;
+int deltaz;
 
-void setup(){
-
-    Wire.begin();
-    Serial.begin(9600);
-
-    Serial.println("starting up L3G4200D");
-    setupL3G4200D(2000); // Configure L3G4200 - 250, 500 or 2000 deg/sec
-
-    delay(1500); //wait for the sensor to be ready
+void writeRegister(int deviceAddress, byte address, byte val) {
+    Wire.beginTransmission(deviceAddress); // start transmission to device
+    Wire.write(address); // send register address
+    Wire.write(val); // send value to write
+    Wire.endTransmission(); // end transmission
 }
 
-void loop(){
-    getGyroValues(); // This will update x, y, and z with new values
+int readRegister(int deviceAddress, byte address){
 
-    Serial.print("X:");
-    Serial.print(x); //Here you can do some operations befor you use that value
-    //For example set it on a surface and substract or add numbers to get 0,0,0 if you want that position to be your reference
-    Serial.print(" Y:");
-    Serial.print(y);
+    int v;
+    Wire.beginTransmission(deviceAddress);
+    Wire.write(address); // register to read
+    Wire.endTransmission();
 
-    Serial.print(" Z:");
-    Serial.println(z);
+    Wire.requestFrom(deviceAddress, 1); // read a byte
 
-    delay(100); //Just here to slow down the serial to make it more readable
+    while(!Wire.available()) {
+        // waiting
+    }
+
+    v = Wire.read();
+    return v;
 }
 
 void getGyroValues(){
@@ -86,26 +98,60 @@ int setupL3G4200D(int scale){
     writeRegister(L3G4200D_Address, CTRL_REG5, 0b00000000);
 }
 
-void writeRegister(int deviceAddress, byte address, byte val) {
-    Wire.beginTransmission(deviceAddress); // start transmission to device
-    Wire.write(address); // send register address
-    Wire.write(val); // send value to write
-    Wire.endTransmission(); // end transmission
+void printValues(){
+    Serial.print(double(x),2);
+    //Here you can do some operations before you use that value
+    //For example set it on a surface and substract or add numbers to get 0,0,0 if you want that position to be your reference
+    Serial.print("\t");
+    Serial.print(double(y),2);
+    Serial.print("\t");
+    Serial.print(double(z),2);
+    Serial.print("\t");
 }
 
-int readRegister(int deviceAddress, byte address){
-
-    int v;
-    Wire.beginTransmission(deviceAddress);
-    Wire.write(address); // register to read
-    Wire.endTransmission();
-
-    Wire.requestFrom(deviceAddress, 1); // read a byte
-
-    while(!Wire.available()) {
-        // waiting
+void printSmothValues(){
+    if(abs(prevx - x)<30){
+        Serial.print(x);
+    } else {
+        Serial.print(prevx);
+    }
+    Serial.print("\t");
+    if(abs(prevy - y)<30) {
+        Serial.print(y);
+    } else {
+        Serial.print(prevy);
+    }
+    Serial.print("\t");
+    if(abs(prevz - z)<30) {
+        Serial.print(z);
+    } else {
+        Serial.print(prevz);
     }
 
-    v = Wire.read();
-    return v;
+}
+
+void setup(){
+
+    Wire.begin();
+    Serial.begin(9600);
+
+    Serial.println("starting up L3G4200D");
+    setupL3G4200D(500); // Configure L3G4200 - 250, 500 or 2000 deg/sec
+
+    delay(1500); //wait for the sensor to be ready
+}
+
+
+void loop(){
+    prevx = x;
+    prevy = y;
+    prevz = z;
+    getGyroValues(); // This will update x, y, and z with new values
+
+    printValues();
+    printSmothValues();
+
+    Serial.println();
+    
+    delay(100); //Just here to slow down the serial to make it more readable
 }
